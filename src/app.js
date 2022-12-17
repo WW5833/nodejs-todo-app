@@ -3,17 +3,27 @@ const express = require("express");
 const app = express();
 
 const viewRouter = require("./routers/viewRouter");
-const apiRouter = require("./routers/apiUserRouter");
+const apiRouter = require("./routers/apiRouter");
 
 app.set("view engine", "pug");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(bodyParser.raw());
 
+async function Wait(ms) {
+    await new Promise((resolve, reject) => setTimeout(resolve, ms));
+}
 
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
+    var url = req.url;
     next();
-    console.log(req.method + " " + req.path + ": " + res.statusCode)
+
+    if (url.startsWith("/api")) {
+        while (!req.complete)
+            await Wait(100);
+    }
+
+    console.log(`${req.method} ${url}: ${res.statusMessage ?? "Ok"} (${res.statusCode})`);
 })
 
 app.use(express.static('src/public'))

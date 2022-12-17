@@ -1,8 +1,20 @@
-.col-6, .col-12 {
+.main-block {
     border: 1px black solid;
     padding: 20px;
 }
 
 * {
     overflow-x: hidden;
+}
+
+body {
+    background-image: radial-gradient(circle, #3fb3ca 0%, #00d4ff 100%);
+}
+
+.green {
+    color: green;
+}
+
+.red {
+    color: red;
 }

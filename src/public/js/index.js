@@ -4,26 +4,6 @@ const archiveDate = document.getElementById("archiveDate");
 const inputTitle = document.getElementById("inputTitle");
 const inputDate = document.getElementById("inputDate");
 
-const loginUsername = document.getElementById("loginUsername");
-const loginPassword = document.getElementById("loginPassword");
-
-function setCookie(cname, cvalue, exdays = 1) {
-    const d = new Date();
-    d.setTime(d.getTime() + (exdays*24*60*60*1000));
-    let expires = "expires="+ d.toUTCString();
-    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
-}
-
-function setUserId(userId) {
-    setCookie("user_id", userId);
-}
-
-function getUserId() {
-    return document.cookie.split(';').find(x => x.startsWith("user_id"))?.split('=')[1] ?? "";
-}
-
-const myModal = new bootstrap.Modal(document.getElementById('loginModal'))
-
 
 function UpdateCurrentToDo() {
     var date = currentDate.value ?? new Date();
@@ -45,6 +25,15 @@ function UpdateCurrentToDo() {
                 .css("display", "none")
                 .html(toWrite)
                 .fadeIn("slow");
+        },
+        error: function (request, status, error) {
+            if(request.status == 400) {
+                ShowToastError("Get failed, invalid data (" + request.responseJSON.Message + ")");
+            }
+            else {
+                console.log(request);
+                ShowToastError("Get failed for unknown reasons");
+            }
         }
     });
 }
@@ -59,6 +48,15 @@ function UpdateCurrentToDoStatus(id) {
             console.log(result);
             UpdateCurrentToDo();
             UpdateArchiveToDo();
+        },
+        error: function (request, status, error) {
+            if(request.status == 400) {
+                ShowToastError("Update failed, invalid data (" + request.responseJSON.Message + ")");
+            }
+            else {
+                console.log(request);
+                ShowToastError("Update failed for unknown reasons");
+            }
         }
     });
 }
@@ -71,6 +69,15 @@ function DeleteToDo(id) {
             console.log(result);
             UpdateCurrentToDo();
             UpdateArchiveToDo();
+        },
+        error: function (request, status, error) {
+            if(request.status == 400) {
+                ShowToastError("Delete failed, invalid data (" + request.responseJSON.Message + ")");
+            }
+            else {
+                console.log(request);
+                ShowToastError("Delete failed for unknown reasons");
+            }
         }
     });
 }
@@ -87,40 +94,14 @@ function AddToDo() {
             console.log(result);
             UpdateCurrentToDo();
             UpdateArchiveToDo();
-        }
-    });
-}
-
-function Logout() {
-    setUserId("");
-    myModal.show();
-}
-
-function Login() {
-    $.ajax({
-        url: `/api/login`,
-        type: "POST",
-        data: {
-            "Username": loginUsername.value,
-            "Password": loginPassword.value
-        },
-        success: result => {
-            console.log(result);
-
-            myModal.hide();
-            setUserId(result.UserId);
-
-            UpdateCurrentToDo();
-            UpdateArchiveToDo();
-            
         },
         error: function (request, status, error) {
-            if(request.status == 403) {
-                alert(request.responseText);
+            if(request.status == 400) {
+                ShowToastError("Add failed, invalid data (" + request.responseJSON.Message + ")");
             }
             else {
                 console.log(request);
-                alert("Login failed for unknown reasons")
+                ShowToastError("Add failed for unknown reasons");
             }
         }
     });
@@ -135,7 +116,7 @@ function UpdateArchiveToDo() {
             console.log(result);
             let toWrite = "";
             result.forEach(todo => {
-                toWrite += `<strong>${todo.Title}</strong>: &nbsp;`
+                toWrite += `<strong class="${todo.State ? "green" : "red"}">${todo.Title}</strong>: &nbsp;`
                 toWrite += `<input type="button" id="delete_todo_button_${todo._id}" onclick='DeleteToDo("${todo._id}")'  value="Delete">`
                 toWrite += "<br>";
             });
@@ -143,6 +124,15 @@ function UpdateArchiveToDo() {
                 .css("display", "none")
                 .html(toWrite)
                 .fadeIn("slow");
+        },
+        error: function (request, status, error) {
+            if(request.status == 400) {
+                ShowToastError("Get failed, invalid data (" + request.responseJSON.Message + ")");
+            }
+            else {
+                console.log(request);
+                ShowToastError("Get failed for unknown reasons");
+            }
         }
     });
 }
@@ -150,10 +140,18 @@ function UpdateArchiveToDo() {
 currentDate.valueAsDate = new Date();
 archiveDate.valueAsDate = new Date();
 
-if(getUserId() != "") {
-    UpdateCurrentToDo();
-    UpdateArchiveToDo();
+const toastElList = document.querySelectorAll('.toast')
+const toastList = [...toastElList].map(toastEl => new bootstrap.Toast(toastEl))
+
+const alertToastBody = document.getElementById("alertToastBody");
+const errorToastBody = document.getElementById("errorToastBody");
+
+function ShowToast(message) {
+    alertToastBody.innerText = message;
+    toastList[0].show();
 }
-else {
-    myModal.show();
+
+function ShowToastError(message) {
+    errorToastBody.innerText = message;
+    toastList[1].show();
 }
